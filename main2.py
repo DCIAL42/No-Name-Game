@@ -96,8 +96,31 @@ class Game:
                 self.resetValues()
                 break
 
+    def spawnBoss(self):
+        bossSize = 0
+        pygame.mixer.music.load("Boke, Boss theme.mp3")
+        pygame.mixer.music.play(-1)
+        while True:
+            self.screen.fill((153, 0, 48))
+            scoreDisplay = self.font.render((f"Score: {self.score}"), True, (255, 255, 255))
+            self.screen.blit(scoreDisplay, (0, 0))
+            spawningBossRect = pygame.Rect((736, 0, bossSize, bossSize))
+            pygame.draw.rect(game.screen, (255, 0, 255), spawningBossRect)
+            bossSize += 0.01
+            self.player.move(playerMovement)
+            self.player.displayChar()
+            if self.player.checkCollision(spawningBossRect):
+                deathSound.play()
+                self.endScreen("You Lose", (255, 0, 0), (275, 200))
+            self.checkQuit()
+            pygame.display.update()
+            if bossSize > 64:
+                break
+
+
     def finalBoss(self):
-        boss = Boss(768, 0, (255, 0, 255), 64)
+        self.spawnBoss()
+        boss = Boss(736, 0, (255, 0, 255), 64)
         while True:
             self.screen.fill((153, 0, 48))
             scoreDisplay = self.font.render((f"Score: {self.score}"), True, (255, 255, 255))
@@ -126,18 +149,19 @@ class Game:
                 self.score += 1
             if self.player.checkCollision(boss.charRect):
                 if self.superMode:
-                    if self.player.checkCollision(boss.charRect):
-                        boss.killBoss()
-                        killSound.play()
+                    boss.killBoss()
+                    killSound.play()
                     self.scores.append(self.score)
                 else:
                     deathSound.play()
                     self.endScreen("You Lose", (255, 0, 0), (275, 200))
-                    break
+                    self.spawnBoss()
                 self.superMode = False
             # If all enemies dead, display win screen
             if not boss.isAlive:
                 self.endScreen("You Win!", (0, 255, 0), (300, 200))
+                pygame.mixer.music.load("Boke, The Soundtrack.mp3")
+                pygame.mixer.music.play(-1)
                 break
             self.checkQuit()
             pygame.display.update()
