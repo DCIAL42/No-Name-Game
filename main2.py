@@ -40,6 +40,7 @@ class Game:
         self.enemy1 = Enemy(0, 0, (0, 0, 255), 16, 1)
         self.enemy2 = Enemy(784, 0, (0, 0, 255), 64, 2)
         self.enemy3 = Enemy(0, 584, (0, 0, 255), 16, 3)
+        self.boss = Boss(736, 0, (255, 0, 255), 64)
         self.player = Player(400, 300, (0, 255, 0), 16)
         self.boke = Collectible(0, 0, (255, 0, 0), 16)
         self.enemyList = [self.enemy1, self.enemy2, self.enemy3]
@@ -52,8 +53,8 @@ class Game:
             pygame.display.quit() if event.type == pygame.QUIT else 0
 
     def resetValues(self):
-        self.score = 0
-        self.scores = []
+        self.score = 0 if not self.isBoss else 30
+        self.scores = [] if not self.isBoss else [30]
         self.player.x, self.player.y = 400, 300
         self.enemy1.x, self.enemy1.y = 0, 0
         self.enemy2.x, self.enemy2.y = 784, 0
@@ -62,7 +63,6 @@ class Game:
         self.enemy2.isAlive = True
         self.enemy3.isAlive = True
         self.boke.isAlive = False
-        self.isBoss = False
 
     def pauseScreen(self):
         pauseDisplay = self.bigFont.render(("Game Paused"), True, (255, 255, 255))
@@ -79,7 +79,36 @@ class Game:
             if key[pygame.K_RETURN]:
                 self.paused = False
 
+    def creditsScreen(self):
+        titleDisplay = self.bigFont.render(("Boke, The Game"), True, (255, 255, 255))
+        creditsDisplay = self.bigFont.render(("Credits"), True, (255, 255, 255))
+        credits1 = self.font.render(("Lead Programmer: Daniel Cooke"), True, (255, 255, 255))
+        credits2 = self.font.render(("Music By: Conor Lyons"), True, (255, 255, 255))
+        titleDisplayy = 600
+        creditsDisplayy = 750
+        credits1y = 925
+        credits2y = 1000
+        while True:
+            # Display credits screen
+            self.screen.fill((153, 0, 48))
+            self.screen.blit(titleDisplay, (210, titleDisplayy))
+            self.screen.blit(creditsDisplay, (325, creditsDisplayy))
+            self.screen.blit(credits1, (200, credits1y))
+            self.screen.blit(credits2, (200, credits2y))
+            titleDisplayy -= 0.1
+            creditsDisplayy -= 0.1
+            credits1y -= 0.1
+            credits2y -= 0.1
+            pygame.display.update()
+            self.checkQuit()
+            if credits2y < 0:
+                break
+
     def endScreen(self, message, messageColour, messagePosition):
+        if message == "You Win!":
+            pygame.mixer.music.load("Boke, Win Theme.mp3")
+            pygame.mixer.music.play(-1)
+            self.creditsScreen()
         scoreDisplay = self.font.render((f"Score: {self.score}"), True, (255, 255, 255))
         checkMicrobit = self.font.render((f"Press enter to continue"), True, (255, 255, 255))
         outcomeMessage = self.bigFont.render((message), True, messageColour)
@@ -97,14 +126,14 @@ class Game:
                 break
 
     def spawnBoss(self):
+        self.boss.x = 736
+        self.boss.y = 0
         bossSize = 0
-        pygame.mixer.music.load("Boke, Boss theme.mp3")
-        pygame.mixer.music.play(-1)
         while True:
             self.screen.fill((153, 0, 48))
             scoreDisplay = self.font.render((f"Score: {self.score}"), True, (255, 255, 255))
             self.screen.blit(scoreDisplay, (0, 0))
-            spawningBossRect = pygame.Rect((736, 0, bossSize, bossSize))
+            spawningBossRect = pygame.Rect((800-bossSize, 0, bossSize, bossSize))
             pygame.draw.rect(game.screen, (255, 0, 255), spawningBossRect)
             bossSize += 0.01
             self.player.move(playerMovement)
@@ -120,7 +149,6 @@ class Game:
 
     def finalBoss(self):
         self.spawnBoss()
-        boss = Boss(736, 0, (255, 0, 255), 64)
         while True:
             self.screen.fill((153, 0, 48))
             scoreDisplay = self.font.render((f"Score: {self.score}"), True, (255, 255, 255))
@@ -134,9 +162,9 @@ class Game:
             # Move and display characters
             self.player.move(playerMovement)
             self.player.displayChar()
-            if boss.isAlive:
-                boss.move()
-                boss.displayChar()
+            if self.boss.isAlive:
+                self.boss.move()
+                self.boss.displayChar()
             if self.superMode:
                 self.player.spriteColour = (255, 255, 0)
             else:
@@ -147,9 +175,9 @@ class Game:
                 self.boke.isAlive = False
                 collectSound.play()
                 self.score += 1
-            if self.player.checkCollision(boss.charRect):
+            if self.player.checkCollision(self.boss.charRect):
                 if self.superMode:
-                    boss.killBoss()
+                    self.boss.killBoss()
                     killSound.play()
                     self.scores.append(self.score)
                 else:
@@ -158,14 +186,14 @@ class Game:
                     self.spawnBoss()
                 self.superMode = False
             # If all enemies dead, display win screen
-            if not boss.isAlive:
+            if not self.boss.isAlive:
                 self.endScreen("You Win!", (0, 255, 0), (300, 200))
+                self.isBoss = False
                 pygame.mixer.music.load("Boke, The Soundtrack.mp3")
                 pygame.mixer.music.play(-1)
                 break
             self.checkQuit()
             pygame.display.update()
-            time.sleep(0.001)
 
     def gameLoop(self):
         while self.running:
@@ -210,9 +238,10 @@ class Game:
                     self.superMode = False
                 # If all enemies dead, display win screen
                 if all(not i.isAlive for i in self.enemyList):
+                    pygame.mixer.music.load("Boke, Boss theme v2.mp3")
+                    pygame.mixer.music.play(-1)
                     self.isBoss = True
                     self.finalBoss()
-                    self.endScreen("You Win!", (0, 255, 0), (300, 200))
                 self.checkQuit()
                 pygame.display.update()
                 time.sleep(0.0025)
