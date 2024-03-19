@@ -194,6 +194,7 @@ class Game:
                 break
             self.checkQuit()
             pygame.display.update()
+            time.sleep(0.001)
 
     def gameLoop(self):
         while self.running:
