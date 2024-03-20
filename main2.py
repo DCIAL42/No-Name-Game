@@ -63,6 +63,7 @@ class Game:
         self.enemy2.isAlive = True
         self.enemy3.isAlive = True
         self.boke.isAlive = False
+        self.boss.isAlive = True
 
     def pauseScreen(self):
         pauseDisplay = self.bigFont.render(("Game Paused"), True, (255, 255, 255))
@@ -194,6 +195,7 @@ class Game:
                 break
             self.checkQuit()
             pygame.display.update()
+            time.sleep(0.001)
 
     def gameLoop(self):
         while self.running:
