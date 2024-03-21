@@ -227,7 +227,7 @@ class Game:
                     self.boke.isAlive = False
                     collectSound.play()
                     self.score += 1
-                if self.player.checkCollision(self.enemy1.charRect) or self.player.checkCollision(self.enemy2.charRect) or self.player.checkCollision(self.enemy3.charRect):
+                if self.player.checkCollision(self.enemy1.charRect) or self.player.checkCollision(self.enemy2.charRect) or self.player.checkCollision(self.enemy3.charRect) or (self.player.checkCollision(self.boss.charRect) and self.isBoss):
                     if self.superMode:
                         for i in self.enemyList:
                             if self.player.checkCollision(i.charRect):
@@ -239,14 +239,19 @@ class Game:
                         self.endScreen("You Lose", (255, 0, 0), (275, 200))
                     self.superMode = False
                 # If all enemies dead, display win screen
-                if all(not i.isAlive for i in self.enemyList):
+                if all(not i.isAlive for i in self.enemyList) and not self.isBoss:
                     pygame.mixer.music.load("Boke, Boss theme v2.mp3")
                     pygame.mixer.music.play(-1)
                     self.isBoss = True
                     self.finalBoss()
+                elif not self.boss.isAlive and self.isBoss:
+                        self.endScreen("You Win!", (0, 255, 0), (300, 200))
+                        self.isBoss = False
+                        pygame.mixer.music.load("Boke, The Soundtrack.mp3")
+                        pygame.mixer.music.play(-1)
                 self.checkQuit()
                 pygame.display.update()
-                time.sleep(0.0025)
+                time.sleep(0.0025) if not self.isBoss else time.sleep(0.001)
             except:
                 break
 
